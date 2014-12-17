@@ -20,18 +20,26 @@ For these scripts to work, the following dependencies are required:
   that can be read by gcov.
 * `curl` - Needed to upload the generated json file to coveralls.
 
+Example project
+---------------
+
+Here an example CMake project can be found that shows how these
+scripts can be used:
+https://github.com/JoakimSoderberg/coveralls-cmake-example
+
 Usage
 -----
 
 To use the script in your CMake project you need to do three things:
 
-**1. Include the Coveralls.cmake script**
+**1. Include the Coveralls.cmake script in CMakeLists.txt**
 
 Place the files under your projects CMakeModules directory.
 For example `${PROJECT_SOURCE_DIR}/cmake`, and include them.
 
 ```cmake
 cmake_minimum_required(VERSION 2.8)
+project(myproject)
 
 # Add project cmake modules to path.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -92,7 +100,7 @@ That's it! If you did everything right, you can do:
 
 ```bash
 $ mkdir build && cd build
-$ cmake -DCOVERALLS -DCMAKE_BUILD_TYPE=Debug ..
+$ cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
 $ make
 $ make coveralls
 ```
