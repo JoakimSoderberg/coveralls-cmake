@@ -28,8 +28,8 @@
 function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 
 	if (ARGC GREATER 2)
-		message("Coveralls: Using alternate CMake script dir: ${_CMAKE_SCRIPT_PATH}")
 		set(_CMAKE_SCRIPT_PATH ${ARGN})
+		message("Coveralls: Using alternate CMake script dir: ${_CMAKE_SCRIPT_PATH}")
 	else()
 		set(_CMAKE_SCRIPT_PATH ${PROJECT_SOURCE_DIR}/cmake)
 	endif()
