@@ -260,7 +260,16 @@ foreach (GCOV_FILE ${GCOV_FILES})
 	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
 
 	# Loads the gcov file as a list of lines.
-	file(STRINGS ${GCOV_FILE} GCOV_LINES)
+	# (We first open the file and replace all occurences of [] with _
+	#  because CMake will fail to parse a line containing unmatched brackets...)
+	# https://public.kitware.com/Bug/view.php?id=15369
+	file(READ ${GCOV_FILE} GCOV_CONTENTS)
+	string(REPLACE "[" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
+	string(REPLACE "]" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
+	file(WRITE ${GCOV_FILE}_tmp "${GCOV_CONTENTS}")
+
+	file(STRINGS ${GCOV_FILE}_tmp GCOV_LINES)
+	list(LENGTH GCOV_LINES LINE_COUNT)
 
 	# Instead of trying to parse the source from the
 	# gcov file, simply read the file contents from the source file.
@@ -324,6 +333,8 @@ foreach (GCOV_FILE ${GCOV_FILES})
 
 		math(EXPR GCOV_LINE_COUNT "${GCOV_LINE_COUNT}+1")
 	endforeach()
+
+	message("${GCOV_LINE_COUNT} of ${LINE_COUNT} lines read!")
 
 	# Advanced way of removing the trailing comma in the JSON array.
 	# "[1, 2, 3, " -> "[1, 2, 3"
