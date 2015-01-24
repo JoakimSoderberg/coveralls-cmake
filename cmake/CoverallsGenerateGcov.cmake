@@ -293,6 +293,7 @@ foreach (GCOV_FILE ${GCOV_FILES})
 	set(GCOV_FILE_COVERAGE "[")
 
 	set(GCOV_LINE_COUNT 1) # Line number for the .gcov.
+	set(DO_SKIP 0)
 	foreach (GCOV_LINE ${GCOV_LINES})
 		#message("${GCOV_LINE}")
 		# Example of what we're parsing:
@@ -303,6 +304,26 @@ foreach (GCOV_FILE ${GCOV_FILES})
 			"\\1;\\2;\\3"
 			RES
 			"${GCOV_LINE}")
+
+		# Check if we should exclude lines using the Lcov syntax.
+		string(REGEX MATCH "LCOV_EXCL_START" START_SKIP "${GCOV_LINE}")
+		string(REGEX MATCH "LCOV_EXCL_END" END_SKIP "${GCOV_LINE}")
+		string(REGEX MATCH "LCOV_EXCL_LINE" LINE_SKIP "${GCOV_LINE}")
+
+		set(RESET_SKIP 0)
+		if (LINE_SKIP AND NOT DO_SKIP)
+			set(DO_SKIP 1)
+			set(RESET_SKIP 1)
+		endif()
+
+		if (START_SKIP)
+			set(DO_SKIP 1)
+			message("${GCOV_LINE_COUNT}: Start skip")
+		endif()
+
+		if (END_SKIP)
+			set(DO_SKIP 0)
+		endif()
 
 		list(LENGTH RES RES_COUNT)
 
@@ -317,20 +338,26 @@ foreach (GCOV_FILE ${GCOV_FILES})
 			# Lines with 0 line numbers are metadata and can be ignored.
 			if (NOT ${LINE} EQUAL 0)
 				
-				# Translate the hitcount into valid JSON values.
-				if (${HITCOUNT} STREQUAL "#####")
-					set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}0, ")
-				elseif (${HITCOUNT} STREQUAL "-")
+				if (DO_SKIP)
 					set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}null, ")
 				else()
-					set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}${HITCOUNT}, ")
+					# Translate the hitcount into valid JSON values.
+					if (${HITCOUNT} STREQUAL "#####")
+						set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}0, ")
+					elseif (${HITCOUNT} STREQUAL "-")
+						set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}null, ")
+					else()
+						set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}${HITCOUNT}, ")
+					endif()
 				endif()
-				# TODO: Look for LCOV_EXCL_LINE in SOURCE to get rid of false positives.
 			endif()
 		else()
 			message(WARNING "Failed to properly parse line (RES_COUNT = ${RES_COUNT}) ${GCOV_FILE}:${GCOV_LINE_COUNT}\n-->${GCOV_LINE}")
 		endif()
 
+		if (RESET_SKIP)
+			set(DO_SKIP 0)
+		endif()
 		math(EXPR GCOV_LINE_COUNT "${GCOV_LINE_COUNT}+1")
 	endforeach()
 
