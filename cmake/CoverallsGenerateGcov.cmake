@@ -261,11 +261,13 @@ foreach (GCOV_FILE ${GCOV_FILES})
 
 	# Loads the gcov file as a list of lines.
 	# (We first open the file and replace all occurences of [] with _
-	#  because CMake will fail to parse a line containing unmatched brackets...)
+	#  because CMake will fail to parse a line containing unmatched brackets...
+	#  also the \ to escaped \n in macros screws up things.)
 	# https://public.kitware.com/Bug/view.php?id=15369
 	file(READ ${GCOV_FILE} GCOV_CONTENTS)
 	string(REPLACE "[" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
 	string(REPLACE "]" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
+	string(REPLACE "\\" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
 	file(WRITE ${GCOV_FILE}_tmp "${GCOV_CONTENTS}")
 
 	file(STRINGS ${GCOV_FILE}_tmp GCOV_LINES)
