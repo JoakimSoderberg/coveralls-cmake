@@ -243,7 +243,7 @@ set(JSON_TEMPLATE
 set(SRC_FILE_TEMPLATE
 "{
   \"name\": \"\@GCOV_SRC_REL_PATH\@\",
-  \"source\": \"\@GCOV_FILE_SOURCE\@\",
+  \"source_digest\": \"\@GCOV_CONTENTS_MD5\@\",
   \"coverage\": \@GCOV_FILE_COVERAGE\@
 }"
 )
@@ -258,6 +258,10 @@ foreach (GCOV_FILE ${GCOV_FILES})
 
 	get_source_path_from_gcov_filename(GCOV_SRC_PATH ${GCOV_FILE})
 	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
+
+	# The new coveralls API doesn't need the entire source (Yay!)
+	# However, still keeping that part for now. Will cleanup in the future.
+	file(MD5 ${GCOV_FILE} GCOV_CONTENTS_MD5)
 
 	# Loads the gcov file as a list of lines.
 	# (We first open the file and replace all occurences of [] with _
