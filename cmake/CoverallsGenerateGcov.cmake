@@ -261,7 +261,7 @@ foreach (GCOV_FILE ${GCOV_FILES})
 
 	# The new coveralls API doesn't need the entire source (Yay!)
 	# However, still keeping that part for now. Will cleanup in the future.
-	file(MD5 ${GCOV_FILE} GCOV_CONTENTS_MD5)
+	file(MD5 ${GCOV_SRC_PATH} GCOV_CONTENTS_MD5)
 
 	# Loads the gcov file as a list of lines.
 	# (We first open the file and replace all occurences of [] with _
