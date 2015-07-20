@@ -22,18 +22,18 @@
 # Copyright (C) 2014 Joakim Söderberg <joakim.soderberg@gmail.com>
 #
 
+set(_CMAKE_SCRIPT_PATH ${CMAKE_CURRENT_LIST_DIR}) # must be outside coveralls_setup() to get correct path
 
 #
 # Param _COVERAGE_SRCS	A list of source files that coverage should be collected for.
 # Param _COVERALLS_UPLOAD Upload the result to coveralls?
 #
+
 function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 
 	if (ARGC GREATER 2)
 		set(_CMAKE_SCRIPT_PATH ${ARGN})
-		message("Coveralls: Using alternate CMake script dir: ${_CMAKE_SCRIPT_PATH}")
-	else()
-		set(_CMAKE_SCRIPT_PATH ${PROJECT_SOURCE_DIR}/cmake)
+		message(STATUS "Coveralls: Using alternate CMake script dir: ${_CMAKE_SCRIPT_PATH}")
 	endif()
 
 	if (NOT EXISTS "${_CMAKE_SCRIPT_PATH}/CoverallsClear.cmake")
