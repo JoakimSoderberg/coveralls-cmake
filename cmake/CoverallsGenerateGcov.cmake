@@ -233,9 +233,11 @@ endforeach()
 # TODO: Enable setting these
 set(JSON_SERVICE_NAME "travis-ci")
 set(JSON_SERVICE_JOB_ID $ENV{TRAVIS_JOB_ID})
+set(JSON_REPO_TOKEN $ENV{COVERALLS_REPO_TOKEN})
 
 set(JSON_TEMPLATE
 "{
+  \"repo_token\": \"\@JSON_REPO_TOKEN\@\",
   \"service_name\": \"\@JSON_SERVICE_NAME\@\",
   \"service_job_id\": \"\@JSON_SERVICE_JOB_ID\@\",
   \"source_files\": \@JSON_GCOV_FILES\@
