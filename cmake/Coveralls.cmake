@@ -83,7 +83,7 @@ function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 		)
 
 	if (_COVERALLS_UPLOAD)
-		message("COVERALLS UPLOAD: ON")
+		#message("COVERALLS UPLOAD: ON")
 
 		find_program(CURL_EXECUTABLE curl)
 
@@ -94,7 +94,7 @@ function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 		add_custom_target(coveralls_upload
 			# Upload the JSON to coveralls.
 			COMMAND ${CURL_EXECUTABLE}
-					-S -F json_file=@${COVERALLS_FILE}
+					-sS -F json_file=@${COVERALLS_FILE}
 					https://coveralls.io/api/v1/jobs
 
 			DEPENDS coveralls_generate
@@ -104,7 +104,7 @@ function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 
 		add_custom_target(coveralls DEPENDS coveralls_upload)
 	else()
-		message("COVERALLS UPLOAD: OFF")
+		#message("COVERALLS UPLOAD: OFF")
 		add_custom_target(coveralls DEPENDS coveralls_generate)
 	endif()
 
