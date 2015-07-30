@@ -289,6 +289,9 @@ foreach (GCOV_FILE ${GCOV_FILES})
 	string(REPLACE "[" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
 	string(REPLACE "]" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
 	string(REPLACE "\\" "_" GCOV_CONTENTS "${GCOV_CONTENTS}")
+
+	# Remove file contents to avoid encoding issues (cmake 2.8 has no ENCODING option)
+	string(REGEX REPLACE "([^:]*):([^:]*):([^\n]*)\n" "\\1:\\2: \n" GCOV_CONTENTS "${GCOV_CONTENTS}")
 	file(WRITE ${GCOV_FILE}_tmp "${GCOV_CONTENTS}")
 
 	file(STRINGS ${GCOV_FILE}_tmp GCOV_LINES)
