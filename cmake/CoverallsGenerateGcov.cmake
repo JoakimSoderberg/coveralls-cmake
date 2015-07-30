@@ -69,6 +69,17 @@ string(REGEX REPLACE "\\*" ";" COVERAGE_SRCS ${COVERAGE_SRCS})
 
 find_program(GCOV_EXECUTABLE gcov)
 
+# convert all paths in COVERAGE_SRCS to absolute paths
+set(COVERAGE_SRCS_TMP "")
+foreach (COVERAGE_SRC ${COVERAGE_SRCS})
+	if (NOT "${COVERAGE_SRC}" MATCHES "^/")
+		set(COVERAGE_SRC ${PROJECT_ROOT}/${COVERAGE_SRC})
+	endif()
+	list(APPEND COVERAGE_SRCS_TMP ${COVERAGE_SRC})
+endforeach()
+set(COVERAGE_SRCS ${COVERAGE_SRCS_TMP})
+unset(COVERAGE_SRCS_TMP)
+
 if (NOT GCOV_EXECUTABLE)
 	message(FATAL_ERROR "gcov not found! Aborting...")
 endif()
@@ -212,6 +223,7 @@ foreach (GCOV_FILE ${ALL_GCOV_FILES})
 	# -> 
 	# /path/to/project/root/subdir/the_file.c 
 	get_source_path_from_gcov_filename(GCOV_SRC_PATH ${GCOV_FILE})
+	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
 
 	# Is this in the list of source files?
 	# TODO: We want to match against relative path filenames from the source file root...
