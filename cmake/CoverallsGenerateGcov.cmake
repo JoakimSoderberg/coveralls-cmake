@@ -35,8 +35,8 @@
 #
 # Example for running as standalone CMake script from the command line:
 # (Note it is important the -P is at the end...)
-# $ cmake -DCOV_PATH=$(pwd) 
-#         -DCOVERAGE_SRCS="catcierge_rfid.c;catcierge_timer.c" 
+# $ cmake -DCOV_PATH=$(pwd)
+#         -DCOVERAGE_SRCS="catcierge_rfid.c;catcierge_timer.c"
 #         -P ../cmake/CoverallsGcovUpload.cmake
 #
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
@@ -67,7 +67,11 @@ endif()
 # CMake list format.
 string(REGEX REPLACE "\\*" ";" COVERAGE_SRCS ${COVERAGE_SRCS})
 
-find_program(GCOV_EXECUTABLE gcov)
+if (NOT DEFINED ENV{GCOV})
+  find_program(GCOV_EXECUTABLE gcov)
+else()
+  find_program(GCOV_EXECUTABLE $ENV{GCOV})
+endif()
 
 # convert all paths in COVERAGE_SRCS to absolute paths
 set(COVERAGE_SRCS_TMP "")
@@ -154,9 +158,9 @@ endif()
 #
 macro(get_source_path_from_gcov_filename _SRC_FILENAME _GCOV_FILENAME)
 
-	# /path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov 
-	# -> 
-	# #path#to#project#root#subdir#the_file.c.gcov   
+	# /path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
+	# ->
+	# #path#to#project#root#subdir#the_file.c.gcov
 	get_filename_component(_GCOV_FILENAME_WEXT ${_GCOV_FILENAME} NAME)
 
 	# #path#to#project#root#subdir#the_file.c.gcov -> /path/to/project/root/subdir/the_file.c
@@ -224,9 +228,9 @@ file(GLOB ALL_GCOV_FILES ${COV_PATH}/*.gcov)
 # ALL_GCOV_FILES =
 #				/path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
 #				/path/to/project/root/build/#path#to#project#root#subdir#other_file.c.gcov
-# 
+#
 # Result should be:
-# GCOV_FILES = 
+# GCOV_FILES =
 #				/path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
 #
 set(GCOV_FILES "")
@@ -239,9 +243,9 @@ set(COVERAGE_SRCS_REMAINING ${COVERAGE_SRCS})
 foreach (GCOV_FILE ${ALL_GCOV_FILES})
 
 	#
-	# /path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov 
-	# -> 
-	# /path/to/project/root/subdir/the_file.c 
+	# /path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
+	# ->
+	# /path/to/project/root/subdir/the_file.c
 	get_source_path_from_gcov_filename(GCOV_SRC_PATH ${GCOV_FILE})
 	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
 
@@ -346,8 +350,8 @@ foreach (GCOV_FILE ${GCOV_FILES})
 		# Example of what we're parsing:
 		# Hitcount  |Line | Source
 		# "        8:   26:        if (!allowed || (strlen(allowed) == 0))"
-		string(REGEX REPLACE 
-			"^([^:]*):([^:]*):(.*)$" 
+		string(REGEX REPLACE
+			"^([^:]*):([^:]*):(.*)$"
 			"\\1;\\2;\\3"
 			RES
 			"${GCOV_LINE}")
@@ -384,7 +388,7 @@ foreach (GCOV_FILE ${GCOV_FILES})
 
 			# Lines with 0 line numbers are metadata and can be ignored.
 			if (NOT ${LINE} EQUAL 0)
-				
+
 				if (DO_SKIP)
 					set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}null, ")
 				else()
@@ -469,7 +473,6 @@ string(CONFIGURE ${JSON_TEMPLATE} JSON)
 
 file(WRITE "${COVERALLS_OUTPUT_FILE}" "${JSON}")
 message("###########################################################################")
-message("Generated coveralls JSON containing coverage data:") 
+message("Generated coveralls JSON containing coverage data:")
 message("${COVERALLS_OUTPUT_FILE}")
 message("###########################################################################")
-
