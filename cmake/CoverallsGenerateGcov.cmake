@@ -238,7 +238,7 @@ file(GLOB ALL_GCOV_FILES ${COV_PATH}/*.gcov)
 #				/path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
 #
 set(GCOV_FILES "")
-#message("Look in coverage sources: ${COVERAGE_SRCS}")
+message("Look in coverage sources: ${COVERAGE_SRCS}")
 message("\nFilter out unwanted GCOV files:")
 message("===============================")
 
@@ -251,7 +251,18 @@ foreach (GCOV_FILE ${ALL_GCOV_FILES})
 	# ->
 	# /path/to/project/root/subdir/the_file.c
 	get_source_path_from_gcov_filename(GCOV_SRC_PATH ${GCOV_FILE})
-	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
+    message("========== original file name: ${GCOV_SRC_PATH}")
+    if(${GCOV_SRC_PATH} MATCHES "^\\/.*")
+        file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
+    #message("========== full file name: ${GCOV_SRC_PATH}")
+    else()
+        if(${GCOV_SRC_PATH} MATCHES "\\^.*")
+            string(REGEX REPLACE "^\\^" "${PROJECT_SOURCE_DIR}" "${GCOV_REL_SRC_PATH}" "${GCOV_SRC_PATH}")
+        else()
+            set(GCOV_REL_SRC_PATH "${PROJECT_SOURCE_DIR}/${GCOV_SRC_PATH}")
+        endif()
+    endif()
+    message("========== relative file name: ${GCOV_SRC_REL_PATH}")
 
 	# Is this in the list of source files?
 	# TODO: We want to match against relative path filenames from the source file root...
