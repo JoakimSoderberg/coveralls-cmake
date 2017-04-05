@@ -20,6 +20,7 @@
 # SOFTWARE.
 #
 # Copyright (C) 2014 Joakim Söderberg <joakim.soderberg@gmail.com>
+# Copyright (C) 2017 Kamil Strzempowicz <konserw@gmail.com>
 #
 # This is intended to be run by a custom target in a CMake project like this.
 # 0. Compile program with coverage support.
@@ -160,7 +161,7 @@ endif()
 #
 #   /path/to/project/root/subdir/the_file.c
 #
-macro(get_source_path_from_gcov_filename _SRC_FILENAME _GCOV_FILENAME)
+macro(get_source_path_from_gcov_filename _GCOV_SRC_ABS_PATH _GCOV_FILENAME)
 
 	# /path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
 	# ->
@@ -170,7 +171,16 @@ macro(get_source_path_from_gcov_filename _SRC_FILENAME _GCOV_FILENAME)
 	# #path#to#project#root#subdir#the_file.c.gcov -> /path/to/project/root/subdir/the_file.c
 	string(REGEX REPLACE "\\.gcov$" "" SRC_FILENAME_TMP ${_GCOV_FILENAME_WEXT})
 	string(REGEX REPLACE "\#" "/" SRC_FILENAME_TMP ${SRC_FILENAME_TMP})
-	set(${_SRC_FILENAME} "${SRC_FILENAME_TMP}")
+
+    if(${SRC_FILENAME_TMP} MATCHES "^\\/.*")
+        set(GCOV_SRC_ABS_PATH "${SRC_FILENAME_TMP}")
+    else()
+        if(${SRC_FILENAME_TMP} MATCHES "\\^.*")
+            string(REGEX REPLACE "\\^" ".." SRC_FILENAME_TMP "${SRC_FILENAME_TMP}")
+        endif()
+        get_filename_component(GCOV_SRC_ABS_PATH "${SRC_FILENAME_TMP}" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+    endif()
+	set(${_GCOV_SRC_ABS_PATH} "${GCOV_SRC_ABS_PATH}")
 endmacro()
 
 ##############################################################################
@@ -250,12 +260,16 @@ foreach (GCOV_FILE ${ALL_GCOV_FILES})
 	# /path/to/project/root/build/#path#to#project#root#subdir#the_file.c.gcov
 	# ->
 	# /path/to/project/root/subdir/the_file.c
-	get_source_path_from_gcov_filename(GCOV_SRC_PATH ${GCOV_FILE})
-	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
+	get_source_path_from_gcov_filename(GCOV_SRC_ABS_PATH ${GCOV_FILE})
+    if(${GCOV_SRC_ABS_PATH} MATCHES "^\\/usr\\/.*")
+        file(REMOVE "${GCOV_FILE}")
+        message("Removing system file from list: ${GCOV_FILE}")
+        continue()
+    endif()
 
 	# Is this in the list of source files?
 	# TODO: We want to match against relative path filenames from the source file root...
-	list(FIND COVERAGE_SRCS ${GCOV_SRC_PATH} WAS_FOUND)
+	list(FIND COVERAGE_SRCS_REMAINING ${GCOV_SRC_ABS_PATH} WAS_FOUND)
 
 	if (NOT WAS_FOUND EQUAL -1)
 		message("YES: ${GCOV_FILE}")
@@ -264,7 +278,11 @@ foreach (GCOV_FILE ${ALL_GCOV_FILES})
 		# We remove it from the list, so we don't bother searching for it again.
 		# Also files left in COVERAGE_SRCS_REMAINING after this loop ends should
 		# have coverage data generated from them (no lines are covered).
-		list(REMOVE_ITEM COVERAGE_SRCS_REMAINING ${GCOV_SRC_PATH})
+		list(REMOVE_ITEM COVERAGE_SRCS_REMAINING ${GCOV_SRC_ABS_PATH})
+        if(NOT COVERAGE_SRCS_REMAINING)
+            log("All files covered")
+            break()
+        endif()
 	else()
 		message("NO:  ${GCOV_FILE}")
 	endif()
@@ -448,7 +466,7 @@ foreach(NOT_COVERED_SRC ${COVERAGE_SRCS_REMAINING})
 	set(GCOV_FILE_SOURCE "")
 
 	foreach (SOURCE ${SRC_LINES})
-		set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}null, ")
+		set(GCOV_FILE_COVERAGE "${GCOV_FILE_COVERAGE}0, ")
 
 		string(REPLACE "\\" "\\\\" SOURCE "${SOURCE}")
 		string(REGEX REPLACE "\"" "\\\\\"" SOURCE "${SOURCE}")
@@ -477,6 +495,5 @@ string(CONFIGURE ${JSON_TEMPLATE} JSON)
 
 file(WRITE "${COVERALLS_OUTPUT_FILE}" "${JSON}")
 message("###########################################################################")
-message("Generated coveralls JSON containing coverage data:")
-message("${COVERALLS_OUTPUT_FILE}")
+message("Generated coveralls JSON containing coverage data: ${COVERALLS_OUTPUT_FILE}")
 message("###########################################################################")
