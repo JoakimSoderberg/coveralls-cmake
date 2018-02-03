@@ -179,34 +179,38 @@ endmacro()
 
 # Get the coverage data.
 file(GLOB_RECURSE GCDA_FILES "${COV_PATH}/*.gcda")
-message("GCDA files:")
 
-# Get a list of all the object directories needed by gcov
-# (The directories the .gcda files and .o files are found in)
-# and run gcov on those.
+# Group gcda files by directory
+foreach(GCDA_FILE ${GCDA_FILES})
+	get_filename_component(GCDA_DIR ${GCDA_FILE} PATH)
+	list(APPEND GCDA_DIRS ${GCDA_DIR})
+endforeach(GCDA_FILE ${GCDA_FILES})
+list(REMOVE_DUPLICATES GCDA_DIRS)
+
+# Call gcov for each gcda directory, with all gcda files contained within
 message("Processing GCDA files")
 message("------------------------------------------------------------------------------")
-list(GET GCDA_FILES 0 FIRST_GCDA)
-get_filename_component(GCDA_DIR ${FIRST_GCDA} PATH)
-
-#
-# The -p below refers to "Preserve path components",
-# This means that the generated gcov filename of a source file will
-# keep the original files entire filepath, but / is replaced with #.
-# Example:
-#
-# /path/to/project/root/build/CMakeFiles/the_file.dir/subdir/the_file.c.gcda
-# ------------------------------------------------------------------------------
-# File '/path/to/project/root/subdir/the_file.c'
-# Lines executed:68.34% of 199
-# /path/to/project/root/subdir/the_file.c:creating '#path#to#project#root#subdir#the_file.c.gcov'
-#
-# If -p is not specified then the file is named only "the_file.c.gcov"
-#
-execute_process(
-	COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA_FILES}
-	WORKING_DIRECTORY ${COV_PATH}
-)
+foreach(GCDA_DIR ${GCDA_DIRS})
+	file(GLOB_RECURSE GCDA_FILES "${GCDA_DIR}/*.gcda")
+	message("Merging GCDA files in ${GCDA_DIR}")
+	# The -p below refers to "Preserve path components",
+	# This means that the generated gcov filename of a source file will
+	# keep the original files entire filepath, but / is replaced with #.
+	# Example:
+	#
+	# /path/to/project/root/build/CMakeFiles/the_file.dir/subdir/the_file.c.gcda
+	# ------------------------------------------------------------------------------
+	# File '/path/to/project/root/subdir/the_file.c'
+	# Lines executed:68.34% of 199
+	# /path/to/project/root/subdir/the_file.c:creating '#path#to#project#root#subdir#the_file.c.gcov'
+	#
+	# If -p is not specified then the file is named only "the_file.c.gcov"
+	#
+	execute_process(
+		COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA_FILES}
+		WORKING_DIRECTORY ${COV_PATH}
+	)
+endforeach(GCDA_DIR ${GCDA_DIRS})
 
 # TODO: Make these be absolute path
 file(GLOB ALL_GCOV_FILES ${COV_PATH}/*.gcov)
