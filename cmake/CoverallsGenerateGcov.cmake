@@ -179,17 +179,20 @@ endmacro()
 
 # Get the coverage data.
 file(GLOB_RECURSE GCDA_FILES "${COV_PATH}/*.gcda")
-message("GCDA files:")
 
-# Get a list of all the object directories needed by gcov
-# (The directories the .gcda files and .o files are found in)
-# and run gcov on those.
-foreach(GCDA ${GCDA_FILES})
-	message("Process: ${GCDA}")
-	message("------------------------------------------------------------------------------")
-	get_filename_component(GCDA_DIR ${GCDA} PATH)
+# Group gcda files by directory
+foreach(GCDA_FILE ${GCDA_FILES})
+	get_filename_component(GCDA_DIR ${GCDA_FILE} PATH)
+	list(APPEND GCDA_DIRS ${GCDA_DIR})
+endforeach(GCDA_FILE ${GCDA_FILES})
+list(REMOVE_DUPLICATES GCDA_DIRS)
 
-	#
+# Call gcov for each gcda directory, with all gcda files contained within
+message("Processing GCDA files")
+message("------------------------------------------------------------------------------")
+foreach(GCDA_DIR ${GCDA_DIRS})
+	file(GLOB_RECURSE GCDA_FILES "${GCDA_DIR}/*.gcda")
+	message("Merging GCDA files in ${GCDA_DIR}")
 	# The -p below refers to "Preserve path components",
 	# This means that the generated gcov filename of a source file will
 	# keep the original files entire filepath, but / is replaced with #.
@@ -204,10 +207,10 @@ foreach(GCDA ${GCDA_FILES})
 	# If -p is not specified then the file is named only "the_file.c.gcov"
 	#
 	execute_process(
-		COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA}
+		COMMAND ${GCOV_EXECUTABLE} -p -o ${GCDA_DIR} ${GCDA_FILES}
 		WORKING_DIRECTORY ${COV_PATH}
 	)
-endforeach()
+endforeach(GCDA_DIR ${GCDA_DIRS})
 
 # TODO: Make these be absolute path
 file(GLOB ALL_GCOV_FILES ${COV_PATH}/*.gcov)
